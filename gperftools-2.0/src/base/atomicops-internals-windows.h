@@ -156,7 +156,7 @@ inline Atomic32 NoBarrier_AtomicIncrement(volatile Atomic32* ptr,
 // In msvc8/vs2005, winnt.h already contains a definition for
 // MemoryBarrier in the global namespace.  Add it there for earlier
 // versions and forward to it from within the namespace.
-#if !(defined(_MSC_VER) && _MSC_VER >= 1400)
+#if !(defined(_MSC_VER) && _MSC_VER >= 1400 || defined(__MINGW32__))
 inline void MemoryBarrier() {
   Atomic32 value = 0;
   base::subtle::NoBarrier_AtomicExchange(&value, 0);

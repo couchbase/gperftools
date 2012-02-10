@@ -62,6 +62,7 @@
 #include <sys/types.h>       /* for _off_t */
 #include <assert.h>
 #include <stdlib.h>          /* for rand, srand, _strtoxxx */
+#include <time.h>            /* for time */
 
 /*
  * 4018: signed/unsigned mismatch is common (and ok for signed_i < unsigned_i)
@@ -390,7 +391,11 @@ EXTERN_C PERFTOOLS_DLL_DECL void WriteToStderr(const char* buf, int len);
 
 /* ----------------------------------- SYSTEM/PROCESS */
 
+#ifdef pid_t
+#undef pid_t
 typedef int pid_t;
+#endif
+
 #if __STDC__ && !defined(__MINGW32__)
 inline pid_t getpid(void) { return _getpid(); }
 #endif
