@@ -60,6 +60,10 @@
 // pretend the pthreads wrapper doesn't exist, even when it does.
 #undef HAVE_PTHREAD
 
+// Under cygwin/mingw, we have experienced unknown memory corruptions
+// Disable it for the time being.
+#undef HAVE_TLS
+
 #include "windows/port.h"
 
 #endif  /* __MINGW32__ */
