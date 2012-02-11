@@ -15,7 +15,7 @@ AM_CPPFLAGS += -DNO_TCMALLOC_SAMPLES
 endif !WITH_STACK_TRACE
 
 # This is mostly based on configure options
-AM_CXXFLAGS =
+AM_CXXFLAGS = -DTCMALLOC_LARGE_PAGES
 
 # These are good warnings to turn on by default.  We also tell gcc
 # that malloc, free, realloc, mmap, etc. are not builtins (these flags
