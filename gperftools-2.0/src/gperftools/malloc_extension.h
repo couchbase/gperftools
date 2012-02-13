@@ -54,7 +54,7 @@
 
 // Annoying stuff for windows -- makes sure clients can import these functions
 #ifndef PERFTOOLS_DLL_DECL
-# ifdef _WIN32
+# if defined(_WIN32) && !defined(__MINGW32__)
 #   define PERFTOOLS_DLL_DECL  __declspec(dllimport)
 # else
 #   define PERFTOOLS_DLL_DECL
