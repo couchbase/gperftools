@@ -15,7 +15,7 @@ AM_CPPFLAGS += -DNO_TCMALLOC_SAMPLES
 endif !WITH_STACK_TRACE
 
 # This is mostly based on configure options
-AM_CXXFLAGS = -DTCMALLOC_LARGE_PAGES
+AM_CXXFLAGS =
 
 # These are good warnings to turn on by default.  We also tell gcc
 # that malloc, free, realloc, mmap, etc. are not builtins (these flags
@@ -217,7 +217,7 @@ libwindows_la_SOURCES = $(WINDOWS_INCLUDES) \
                         src/windows/preamble_patcher.cc \
                         src/windows/preamble_patcher_with_stub.cc
 # patch_functions.cc uses Psapi.lib.  MSVC has a #pragma for that, but not us.
-libwindows_la_LIBADD = -lPsapi
+libwindows_la_LIBADD = -lpsapi
 
 SPINLOCK_INCLUDES = src/base/spinlock.h \
                     src/base/spinlock_internal.h \
@@ -234,6 +234,7 @@ SPINLOCK_INCLUDES = src/base/spinlock.h \
 noinst_LTLIBRARIES += libspinlock.la
 libspinlock_la_SOURCES = src/base/spinlock.cc \
                          src/base/spinlock_internal.cc \
+                         src/base/atomicops-internals-x86.cc \
                          $(SPINLOCK_INCLUDES)
 
 LIBSPINLOCK = libwindows.la libspinlock.la libsysinfo.la liblogging.la
