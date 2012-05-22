@@ -445,7 +445,7 @@ sub Init() {
       $main::opt_inuse_objects +
       $main::opt_alloc_space +
       $main::opt_alloc_objects > 1) {
-    usage("Specify at most on of --inuse/--alloc options");
+    usage("Specify at most one of --inuse/--alloc options");
   }
 
   # Check output granularities
