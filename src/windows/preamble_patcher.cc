@@ -103,6 +103,7 @@ void* PreamblePatcher::ResolveTargetImpl(unsigned char* target,
       new_target = target + 2 + relative_offset;
     } else if (target[0] == ASM_JMP32ABS_0 &&
                target[1] == ASM_JMP32ABS_1) {
+    jmp32rel:
       // Visual studio seems to sometimes do it this way instead of the
       // previous way.  Not sure what the rules are, but it was happening
       // with operator new in some binaries.
@@ -118,6 +119,18 @@ void* PreamblePatcher::ResolveTargetImpl(unsigned char* target,
         memcpy(&new_target_v, reinterpret_cast<void*>(target + 2), 4);
       }
       new_target = reinterpret_cast<unsigned char*>(*new_target_v);
+    } else if (kIs64BitBinary && target[0] == ASM_REXW
+               && target[1] == ASM_JMP32ABS_0
+               && target[2] == ASM_JMP32ABS_1) {
+      // in Visual Studio 2012 we're seeing jump like that:
+      //   rex.W jmpq *0x11d019(%rip)
+      //
+      // according to docs I have, rex prefix is actually unneeded and
+      // can be ignored. I.e. docs say for jumps like that operand
+      // already defaults to 64-bit. But clearly it breaks abs. jump
+      // detection above and we just skip rex
+      target++;
+      goto jmp32rel;
     } else {
       break;
     }
@@ -535,6 +548,12 @@ bool PreamblePatcher::IsShortConditionalJump(
   return (*(target) & 0x70) == 0x70 && instruction_size == 2;
 }
 
+bool PreamblePatcher::IsShortJump(
+    unsigned char* target,
+    unsigned int instruction_size) {
+  return target[0] == 0xeb && instruction_size == 2;
+}
+
 bool PreamblePatcher::IsNearConditionalJump(
     unsigned char* target,
     unsigned int instruction_size) {
@@ -594,6 +613,36 @@ SideStepError PreamblePatcher::PatchShortConditionalJump(
     memcpy(reinterpret_cast<void*>(target),
            reinterpret_cast<void*>(&jmpcode), 2);
     memcpy(reinterpret_cast<void*>(target + 2),
+           reinterpret_cast<void*>(&fixup_jump_offset), 4);
+  }
+
+  return SIDESTEP_SUCCESS;
+}
+
+SideStepError PreamblePatcher::PatchShortJump(
+    unsigned char* source,
+    unsigned int instruction_size,
+    unsigned char* target,
+    unsigned int* target_bytes,
+    unsigned int target_size) {
+  // note: rel8 offset is _signed_. Thus we need signed char here.
+  unsigned char* original_jump_dest = (source + 2) + static_cast<signed char>(source[1]);
+  unsigned char* stub_jump_from = target + 5;
+  __int64 fixup_jump_offset = original_jump_dest - stub_jump_from;
+  if (fixup_jump_offset > INT_MAX || fixup_jump_offset < INT_MIN) {
+    SIDESTEP_ASSERT(false &&
+                    "Unable to fix up short jump because target"
+                    " is too far away.");
+    return SIDESTEP_JUMP_INSTRUCTION;
+  }
+
+  *target_bytes = 5;
+  if (target_size > *target_bytes) {
+    // Convert the short jump to a near jump.
+    //
+    // e9 xx xx xx xx = jmp rel32off
+    target[0] = 0xe9;
+    memcpy(reinterpret_cast<void*>(target + 1),
            reinterpret_cast<void*>(&fixup_jump_offset), 4);
   }
 
